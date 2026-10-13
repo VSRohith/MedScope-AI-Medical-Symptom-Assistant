@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedScope AI | Symptom Assistant</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="topbar">
+    <a href="/" class="brand">
+        <span class="brand-icon">✚</span>
+        <span>
+            <strong>MedScope <em>AI</em></strong>
+            <small>SYMPTOM INFORMATION ASSISTANT</small>
+        </span>
+    </a>
+    <span class="status">● Educational support tool</span>
+</header>
+
+<main class="container">
+
+    <section class="hero">
+        <div>
+            <span class="eyebrow">YOUR HEALTH, MORE CLEARLY</span>
+            <h1>Make sense of<br>your symptoms.</h1>
+            <p>
+                Share what you are experiencing to receive an
+                AI-generated summary, helpful questions and
+                general guidance on next steps.
+            </p>
+            <div class="hero-tags">
+                <span>✦ AI-assisted</span>
+                <span>◈ Local AI</span>
+                <span>＋ Safety first</span>
+            </div>
+        </div>
+        <div class="hero-symbol">✚</div>
+    </section>
+
+    {% if error %}
+    <div class="error-box" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <div class="layout">
+
+        <section class="card form-card">
+            <span class="eyebrow">PATIENT INTAKE</span>
+            <h2>Tell us what's going on</h2>
+            <p class="muted">
+                Complete the details you know. Avoid unnecessary
+                personal identifying information.
+            </p>
+
+            <form action="/analyze" method="POST" id="symptom-form">
+
+                <div class="form-grid">
+
+                    <label>
+                        Age <b>*</b>
+                        <input type="number" name="age"
+                               min="0" max="120" required
+                               placeholder="Age in years"
+                               value="{{ form_data.get('age','') }}">
+                    </label>
+
+                    <label>
+                        Sex <span class="optional">Optional</span>
+                        <select name="sex">
+                            <option value="">Prefer not to say</option>
+                            {% for s in ['Female','Male','Intersex','Other'] %}
+                            <option value="{{ s }}"
+                                {% if form_data.get('sex') == s %}selected{% endif %}>
+                                {{ s }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+
+                    <label class="full">
+                        Describe your symptoms <b>*</b>
+                        <textarea name="symptoms" rows="4" required
+                                  placeholder="Describe your symptoms, when they started, and any changes...">{{ form_data.get('symptoms','') }}</textarea>
+                    </label>
+
+                    <label>
+                        Duration
+                        <input type="text" name="duration"
+                               placeholder="e.g. 2 days"
+                               value="{{ form_data.get('duration','') }}">
+                    </label>
+
+                    <label>
+                        Severity
+                        <select name="severity">
+                            <option value="">Select severity</option>
+                            {% for s in ['Mild','Moderate','Severe'] %}
+                            <option value="{{ s }}"
+                                {% if form_data.get('severity') == s %}selected{% endif %}>
+                                {{ s }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+
+                    <label class="full">
+                        Medical history
+                        <textarea name="history" rows="2"
+                                  placeholder="Relevant conditions or none known">{{ form_data.get('history','') }}</textarea>
+                    </label>
+
+                    <label>
+                        Current medications
+                        <textarea name="medications" rows="2"
+                                  placeholder="List medicines, if any">{{ form_data.get('medications','') }}</textarea>
+                    </label>
+
+                    <label>
+                        Known allergies
+                        <textarea name="allergies" rows="2"
+                                  placeholder="List allergies, if any">{{ form_data.get('allergies','') }}</textarea>
+                    </label>
+
+                </div>
+
+                <div class="privacy-note">
+                    ⓘ
+                    <span>
+                        This educational demo processes information
+                        through your locally running Ollama model.
+                    </span>
+                </div>
+
+                <button class="primary-btn" id="analyze-btn" type="submit">
+                    Generate symptom report <span>↗</span>
+                </button>
+
+                <p class="form-footnote">
+                    Educational information only · Not a diagnosis
+                </p>
+            </form>
+        </section>
+
+        <aside class="side-column">
+
+            <section class="card steps-card">
+                <span class="eyebrow">HOW IT WORKS</span>
+                <h2>Your report in 4 steps</h2>
+
+                <div class="step">
+                    <span>01</span>
+                    <div><strong>Patient details</strong>
+                    <p>Describe symptoms and relevant history.</p></div>
+                </div>
+
+                <div class="step">
+                    <span>02</span>
+                    <div><strong>AI analysis</strong>
+                    <p>Organize symptoms and identify missing details.</p></div>
+                </div>
+
+                <div class="step">
+                    <span>03</span>
+                    <div><strong>Health information</strong>
+                    <p>Review possible explanations and questions.</p></div>
+                </div>
+
+                <div class="step">
+                    <span>04</span>
+                    <div><strong>Save your report</strong>
+                    <p>Download the generated text report.</p></div>
+                </div>
+            </section>
+
+            <section class="safety-card">
+                <span class="warning-icon">!</span>
+                <h3>Safety comes first</h3>
+                <p>This tool cannot diagnose or determine whether a condition is urgent.</p>
+                <ul>
+                    <li>Severe difficulty breathing</li>
+                    <li>Persistent chest pain</li>
+                    <li>Blue or grey lips or skin</li>
+                    <li>New confusion or unresponsiveness</li>
+                </ul>
+                <strong>For severe symptoms, contact local emergency services immediately.</strong>
+            </section>
+
+        </aside>
+    </div>
+
+    {% if report %}
+    <section class="card report-card" id="report">
+
+        <div class="report-header">
+            <div>
+                <span class="eyebrow">ANALYSIS COMPLETE</span>
+                <h2>Your symptom information report</h2>
+                <p class="muted">Generated {{ generated_at }}</p>
+            </div>
+
+            <form action="/download" method="POST">
+                <input type="hidden" name="report_text"
+                       value="{{ report_text }}">
+                <button class="download-btn" type="submit">
+                    ↓ Download report
+                </button>
+            </form>
+        </div>
+
+        {% if safety_notice %}
+        <div class="safety-alert">
+            <strong>Important safety notice</strong>
+            <p>{{ safety_notice }}</p>
+        </div>
+        {% endif %}
+
+        <div class="report-content">
+            <span class="eyebrow">✦ MEDSCOPE AI SUMMARY</span>
+            <pre>{{ report }}</pre>
+        </div>
+
+        <p class="muted disclaimer">
+            AI-generated educational information, not a medical diagnosis.
+            Consult a qualified healthcare professional for medical concerns.
+        </p>
+    </section>
+    {% endif %}
+
+    <footer>
+        <strong>MedScope AI</strong>
+        <span>Built for educational use · Powered by local AI</span>
+    </footer>
+
+</main>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
